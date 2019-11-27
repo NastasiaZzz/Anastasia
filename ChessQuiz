@@ -1,0 +1,131 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// размер шахматной доски
+#define SIZE 8
+
+int counter; // счётчик вариантов размещения ферзей
+
+
+typedef int Board[SIZE][SIZE];  // Определяем новый тип Board - массив SIZE x SIZE
+
+
+/**
+* Функция инициализирует (присваивает начальные значения) шахматную доску
+* т.е. заполняет 0
+*****************************/
+void init_board(Board a)
+{
+    int r, c;
+    for(r=0; r < SIZE; r++)
+        for(c=0; c < SIZE; c++)
+            a[r][c] = 0;
+}
+
+/**
+* Функция выводит шахматную доску на дисплей
+* 0 - в виде символа '#', 1 - в виде '.'
+*****************************/
+void show_board(Board a)
+{
+    int r, c;
+    char ch;
+
+    // Выводит разделительную полосу с номером варианта (counter)
+    printf("######## %d ##########\n", ++counter);
+
+    for(r=0; r<SIZE; r++)
+    {
+        for(c=0; c< SIZE; c++)
+        {
+            ch = a[r][c] ? '.' : '#'; // если a[r][c] > 0, то ch = '.', в противном случае ch = '#'
+            printf("%c", ch);
+
+        }
+        // Переходим к следующей строке вывода шахматной доски
+        printf("\n");
+    }
+}
+
+/**
+* Функция "бьёт" клетки, заполняет 1 все поля доски, которые "бьёт" ферзь
+* r - номер строки доски
+* c - номер столбца доски, где размещается ферзь
+*****************************/
+void trace_board(Board b, int r, int c)
+{
+    int row, column, shift;
+
+    // заполняем 1 все клетки в строке r
+    for(column=0; column < SIZE; column++)
+    {
+        if(column != c)
+            b[r][column] = 1;
+    }
+
+    // заполняем 1 все клетки,которые "бьёт" ферзь, в строках НАД r
+    shift = 1;
+    for(row=r-1; row >= 0; row--)
+    {
+
+        b[row][c] = 1; // в колонке с над
+        if(c - shift >= 0)
+            b[row][c - shift] = 1; // влево-вверх
+        if(c + shift < SIZE)
+            b[row][c + shift] = 1; // вправо-вверх
+        shift++;
+    }
+
+    // заполняем 1 все клетки,которые "бьёт" ферзь, в строках ПОД r
+    shift = 1;
+    for(row=r+1; row < SIZE; row++)
+    {
+        b[row][c] = 1; // в колонке с под
+        if(c - shift >= 0)
+            b[row][c - shift] = 1; // влево-вниз
+        if(c + shift < SIZE)
+            b[row][c + shift] = 1; // вправо-вниз
+        shift++;
+    }
+}
+
+/**
+* Функция пытается разместить ферзя в "небитых" клетках, т.е. где b[row][column] == 0
+* r - номер строки доски
+* c - номер колонки доски, где размещается ферзь
+*****************************/
+void place_queen(Board b, int row)
+{
+    int column;
+    Board board;
+
+    // если row БОЛЬШЕ SIZE, то можем вывести найденный вариант
+    if(row >= SIZE)
+    {
+        show_board(b); // вывод доски с расставлеными ферзями
+        return;
+    }
+
+    // перебираем клетки в строке row, ищем не "битую" клетку для размещения ферзя
+    for(column=0; column < SIZE; column++)
+    {
+        if(b[row][column] == 0)
+        {
+            memcpy(board, b, SIZE*SIZE*sizeof(int)); // создаём КОПИЮ доски
+            trace_board(board, row, column); // "бьём" клетки, которые под ударом ферзя размещенного в row, column
+            place_queen(board, row+1); // пробуем разместить ферзя в следующей клетке
+        }
+
+    }
+}
+
+int main()
+{
+    Board b;
+    counter = 0;
+    init_board(b);
+    place_queen(b, 0);
+    printf("Yey!\n");
+    return 0;
+}
